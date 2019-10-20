@@ -19,7 +19,7 @@ class CustomLogFile : public CSingleton<CustomLogFile>
 		}
 		virtual ~CustomLogFile() {m_fp.clear();}
 		void Write(const char* c_pszMsg, BYTE Type) {
-			if (Type >= m_fp.size() || !m_fp.at(Type))
+			if (Type >= m_fp.size() || !m_fp.at(Type).get())
 				return;
 			const __time64_t ct = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			char buffer[80];
