@@ -4,12 +4,16 @@ HWND g_PopupHwnd = NULL;
 ///Add
 #if defined(CUSTOM_LOGS)
 #include <memory>
+#include <chrono>
+#include <time.h>
+#include <filesystem>
 class CustomLogFile : public CSingleton<CustomLogFile>
 {
 	public:
 		CustomLogFile(const std::string& path) { 
-			if (!CreateDirectory(path.c_str(), nullptr))
-				return;
+			if (!filesystem::is_directory(path) || !filesystem::exists(path))
+				if (!filesystem::create_directory(path))
+					return;
 			for (const std::string& v : { "ITEM_ERROR.txt", "MAP_ERROR.txt" })
 				m_fp.emplace_back(unique_ptr<std::FILE, decltype(&fclose)>(fopen((path + "/" + v).c_str(), "a"), &fclose));		
 		}
@@ -17,11 +21,10 @@ class CustomLogFile : public CSingleton<CustomLogFile>
 		void Write(const char* c_pszMsg, BYTE Type) {
 			if (Type >= m_fp.size() || !m_fp.at(Type))
 				return;
-			const auto ct = time(nullptr);
-			const auto ctm = *localtime(&ct);
-			fprintf(m_fp.at(Type).get(), "%02d%02d %02d:%02d:%05d :: %s\n",
-				ctm.tm_mon + 1, ctm.tm_mday, ctm.tm_hour, ctm.tm_min,
-				ELTimer_GetMSec() % 60000, c_pszMsg);
+			const __time64_t ct = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			char buffer[80];
+			strftime(buffer, sizeof(buffer), "%d.%m.%Y-%H:%M:%S", localtime(&ct));
+			fprintf(m_fp.at(Type).get(), "%s :: %s\n", buffer , c_pszMsg);
 			fflush(m_fp.at(Type).get());
 		}
 	protected:
