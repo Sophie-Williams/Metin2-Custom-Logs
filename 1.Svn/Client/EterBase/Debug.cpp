@@ -8,9 +8,10 @@ class CustomLogFile : public CSingleton<CustomLogFile>
 {
 	public:
 		CustomLogFile(const std::string& path) { 
-			if (CreateDirectory(path.c_str(), nullptr))
-				for (const std::string& v : { "ITEM_ERROR.txt", "MAP_ERROR.txt" })
-					m_fp.emplace_back(unique_ptr<std::FILE, decltype(&fclose)>(fopen((path + "/" + v).c_str(), "a"), &fclose));		
+			if (!CreateDirectory(path.c_str(), nullptr))
+				return;
+			for (const std::string& v : { "ITEM_ERROR.txt", "MAP_ERROR.txt" })
+				m_fp.emplace_back(unique_ptr<std::FILE, decltype(&fclose)>(fopen((path + "/" + v).c_str(), "a"), &fclose));		
 		}
 		virtual ~CustomLogFile() {m_fp.clear();}
 		void Write(const char* c_pszMsg, BYTE Type) {
